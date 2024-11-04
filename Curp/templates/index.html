@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de CURP</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Generador de CURP</h1>
+        <form id="curpForm">
+            <div class="form-group">
+                <label for="nombres">Nombre(s)*:</label>
+                <input type="text" id="nombres" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="apellido1">Primer apellido*:</label>
+                <input type="text" id="apellido1" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="apellido2">Segundo apellido:</label>
+                <input type="text" id="apellido2">
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="dia">Día*:</label>
+                    <select id="dia" required>
+                        <option value="">Seleccionar</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="mes">Mes*:</label>
+                    <select id="mes" required>
+                        <option value="">Seleccionar</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="año">Año*:</label>
+                    <input type="number" id="año" min="1900" max="2024" required>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="sexo">Sexo*:</label>
+                <select id="sexo" required>
+                    <option value="">Seleccionar</option>
+                    <option value="H">Hombre</option>
+                    <option value="M">Mujer</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="estado">Estado*:</label>
+                <select id="estado" required>
+                    <option value="">Seleccionar estado</option>
+                    <option value="AG">AGUASCALIENTES</option>
+                    <option value="BC">BAJA CALIFORNIA</option>
+                    <option value="BS">BAJA CALIFORNIA SUR</option>
+                    <option value="CC">CAMPECHE</option>
+                    <option value="CL">COAHUILA</option>
+                    <option value="CM">COLIMA</option>
+                    <option value="CS">CHIAPAS</option>
+                    <option value="CH">CHIHUAHUA</option>
+                    <option value="DF">DISTRITO FEDERAL</option>
+                    <option value="DG">DURANGO</option>
+                    <option value="GT">GUANAJUATO</option>
+                    <option value="GR">GUERRERO</option>
+                    <option value="HG">HIDALGO</option>
+                    <option value="JC">JALISCO</option>
+                    <option value="MC">MEXICO</option>
+                    <option value="MN">MICHOACAN</option>
+                    <option value="MS">MORELOS</option>
+                    <option value="NT">NAYARIT</option>
+                    <option value="NL">NUEVO LEON</option>
+                    <option value="OC">OAXACA</option>
+                    <option value="PL">PUEBLA</option>
+                    <option value="QT">QUERETARO</option>
+                    <option value="QR">QUINTANA ROO</option>
+                    <option value="SP">SAN LUIS POTOSI</option>
+                    <option value="SL">SINALOA</option>
+                    <option value="SR">SONORA</option>
+                    <option value="TC">TABASCO</option>
+                    <option value="TS">TAMAULIPAS</option>
+                    <option value="TL">TLAXCALA</option>
+                    <option value="VZ">VERACRUZ</option>
+                    <option value="YN">YUCATAN</option>
+                    <option value="ZS">ZACATECAS</option>
+                </select>
+            </div>
+            
+            <button type="submit">Generar CURP</button>
+        </form>
+        
+        <div id="result" class="hidden">
+            <h2>Tu CURP:</h2>
+            <p id="curpResult"></p>
+        </div>
+    </div>
+
+    <script>
+        // Rellenar días en función del mes y el año
+        function populateDays() {
+            const month = parseInt(document.getElementById('mes').value);
+            const year = parseInt(document.getElementById('año').value);
+            const daySelect = document.getElementById('dia');
+            
+            let days = 31;
+            if (month === 2) {
+                days = ((year % 4 === 0 && year % 100 !== 0) || year % 400 === 0) ? 29 : 28;
+            } else if ([4, 6, 9, 11].includes(month)) {
+                days = 30;
+            }
+            
+            daySelect.innerHTML = '<option value="">Seleccionar</option>';
+            for (let i = 1; i <= days; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = i;
+                daySelect.appendChild(option);
+            }
+        }
+
+        // Poblar meses
+        const months = [
+            "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+            "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+        ];
+        const mesSelect = document.getElementById('mes');
+        months.forEach((month, index) => {
+            const option = document.createElement('option');
+            option.value = index + 1;
+            option.textContent = month;
+            mesSelect.appendChild(option);
+        });
+
+        // Event listeners
+        document.getElementById('mes').addEventListener('change', populateDays);
+        document.getElementById('año').addEventListener('change', populateDays);
+
+        document.getElementById('curpForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                nombres: document.getElementById('nombres').value,
+                apellido1: document.getElementById('apellido1').value,
+                apellido2: document.getElementById('apellido2').value,
+                dia: parseInt(document.getElementById('dia').value),
+                mes: parseInt(document.getElementById('mes').value),
+                año: document.getElementById('año').value,
+                sexo: document.getElementById('sexo').value,
+                estado: document.getElementById('estado').value
+            };
+
+            try {
+                const response = await fetch('/generate_curp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    document.getElementById('curpResult').textContent = data.curp;
+                    document.getElementById('result').classList.remove('hidden');
+                }
+            } catch (error) {
+                alert('Error al generar CURP');
+            }
+        });
+    </script>
+</body>
+</html>
